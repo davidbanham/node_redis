@@ -2,7 +2,7 @@
 
 var assert = require("assert");
 var config = require("./lib/config");
-var helper = require('./helper')
+var helper = require('./helper');
 var fork = require("child_process").fork;
 var redis = config.redis;
 
@@ -111,7 +111,7 @@ describe("The node_redis client", function () {
                     client = redis.createClient.apply(redis.createClient, args);
                     client.once("error", done);
                     client.once("connect", function () {
-                        client.flushdb(done)
+                        client.flushdb(done);
                     });
                 });
 
@@ -251,7 +251,7 @@ describe("The node_redis client", function () {
                                 // this is the expected and desired behavior
                                 domain.on('error', function (err) {
                                   domain.exit();
-                                  return done()
+                                  return done();
                                 });
                             }
                         });
@@ -664,7 +664,7 @@ describe("The node_redis client", function () {
                 });
 
                 it("sets upper bound on how long client waits before reconnecting", function (done) {
-                    var time = new Date().getTime()
+                    var time = new Date().getTime();
                     var reconnecting = false;
 
                     client = redis.createClient.apply(redis.createClient, args);
