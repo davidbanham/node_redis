@@ -1,3 +1,5 @@
+'use strict';
+
 var assert = require("assert");
 var config = require("./lib/config");
 var helper = require('./helper')
@@ -234,7 +236,7 @@ describe("The node_redis client", function () {
                             try {
                                 domain = require('domain').create();
                             } catch (err) {
-                                console.log("Skipping " + name + " because this version of node doesn't have domains.");
+                                console.log("Skipping test because this version of node doesn't have domains.");
                                 return done();
                             }
 
@@ -242,7 +244,7 @@ describe("The node_redis client", function () {
                                 domain.run(function () {
                                     client.set('domain', 'value', function (err, res) {
                                         assert.ok(process.domain);
-                                        var notFound = res.not.existing.thing; // ohhh nooooo
+                                        throw new Error('ohhhh noooo');
                                     });
                                 });
 
@@ -301,7 +303,7 @@ describe("The node_redis client", function () {
                     });
 
                     client2.on("message", function (channel, data) {
-                        if (channel == name) {
+                        if (channel === name) {
                             assert.equal(data, "some message");
                             throw Error('forced exception');
                         }
