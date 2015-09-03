@@ -539,27 +539,6 @@ RedisClient.prototype.return_error = function (err) {
     }
 };
 
-// if a callback throws an exception, re-throw it on a new stack so the parser can keep going.
-// if a domain is active, emit the error on the domain, which will serve the same function.
-// put this try/catch in its own function because V8 doesn't optimize this well yet.
-function try_callback(callback, reply) {
-    try {
-        callback(null, reply);
-    } catch (err) {
-        if (process.domain) {
-            var currDomain = process.domain;
-            currDomain.emit('error', err);
-            if (process.domain === currDomain) {
-                currDomain.exit();
-            }
-        } else {
-            process.nextTick(function () {
-                throw err;
-            });
-        }
-    }
-}
-
 // hgetall converts its replies to an Object.  If the reply is empty, null is returned.
 function reply_to_object(reply) {
     var obj = {}, j, jl, key, val;
@@ -637,7 +616,7 @@ RedisClient.prototype.return_reply = function (reply) {
                 reply = reply_to_object(reply);
             }
 
-            try_callback(command_obj.callback, reply);
+            command_obj.callback(null, reply);
         } else {
             debug("no callback for reply: " + (reply && reply.toString && reply.toString()));
         }
@@ -661,7 +640,7 @@ RedisClient.prototype.return_reply = function (reply) {
                 // reply[1] can be null
                 var reply1String = (reply[1] === null) ? null : reply[1].toString();
                 if (command_obj && typeof command_obj.callback === "function") {
-                    try_callback(command_obj.callback, reply1String);
+                    command_obj.callback(null, reply1String);
                 }
                 this.emit(type, reply1String, reply[2]); // channel, count
             } else {
