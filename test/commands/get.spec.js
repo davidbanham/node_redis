@@ -62,7 +62,7 @@ describe("The 'get' method", function () {
                     });
 
                     it("gets the value correctly", function (done) {
-                        client.get(key, function (err, res) {
+                        client.GET(key, function (err, res) {
                             helper.isString(value)(err, res);
                             done(err);
                         });

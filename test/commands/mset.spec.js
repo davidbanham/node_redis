@@ -58,7 +58,7 @@ describe("The 'mset' method", function () {
                 describe("and a callback is specified", function () {
                     describe("with valid parameters", function () {
                         it("sets the value correctly", function (done) {
-                            client.mset(key, value, key2, value2);
+                            client.MSET(key, value, key2, value2);
                             client.get(key, helper.isString(value));
                             client.get(key2, helper.isString(value2, done));
                         });

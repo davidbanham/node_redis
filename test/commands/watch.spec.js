@@ -31,7 +31,7 @@ describe("The 'watch' method", function () {
             });
 
             it('does not execute transaction if watched key was modified prior to execution', function (done) {
-                client.watch(watched);
+                client.WATCH(watched);
                 client.incr(watched);
                 multi = client.multi();
                 multi.incr(watched);

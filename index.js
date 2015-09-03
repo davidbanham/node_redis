@@ -583,14 +583,14 @@ RedisClient.prototype.return_reply = function (reply) {
 
     if (command_obj && !command_obj.sub_command) {
         if (typeof command_obj.callback === "function") {
-            if (this.options.detect_buffers && command_obj.buffer_args === false && 'exec' !== command_obj.command.toLowerCase()) {
+            if (this.options.detect_buffers && command_obj.buffer_args === false && 'exec' !== command_obj.command) {
                 // If detect_buffers option was specified, then the reply from the parser will be Buffers.
                 // If this command did not use Buffer arguments, then convert the reply to Strings here.
                 reply = reply_to_strings(reply);
             }
 
             // TODO - confusing and error-prone that hgetall is special cased in two places
-            if (reply && 'hgetall' === command_obj.command.toLowerCase()) {
+            if (reply && 'hgetall' === command_obj.command) {
                 reply = reply_to_object(reply);
             }
 
@@ -691,8 +691,7 @@ RedisClient.prototype.send_command = function (command, args, callback) {
     //     client.sadd(arg1, [arg2, arg3, arg4], cb);
     //  converts to:
     //     client.sadd(arg1, arg2, arg3, arg4, cb);
-    lcaseCommand = command.toLowerCase();
-    if ((lcaseCommand === 'sadd' || lcaseCommand === 'srem') && args.length > 0 && Array.isArray(args[args.length - 1])) {
+    if ((command === 'sadd' || command === 'srem') && args.length > 0 && Array.isArray(args[args.length - 1])) {
         args = args.slice(0, -1).concat(args[args.length - 1]);
     }
 
@@ -852,7 +851,7 @@ RedisClient.prototype.end = function () {
 
 function Multi(client, args) {
     this._client = client;
-    this.queue = [["MULTI"]];
+    this.queue = [["multi"]];
     if (Array.isArray(args)) {
         this.queue = this.queue.concat(args);
     }
@@ -1028,7 +1027,7 @@ Multi.prototype.exec = function (callback) {
         if (args.length === 1 && Array.isArray(args[0])) {
             args = args[0];
         }
-        if (command.toLowerCase() === 'hmset' && typeof args[1] === 'object') {
+        if (command === 'hmset' && typeof args[1] === 'object') {
             obj = args.pop();
             Object.keys(obj).forEach(function (key) {
                 args.push(key);
@@ -1048,7 +1047,7 @@ Multi.prototype.exec = function (callback) {
     }, this);
 
     // TODO - make this callback part of Multi.prototype instead of creating it each time
-    return this._client.send_command("EXEC", [], function (err, replies) {
+    return this._client.send_command("exec", [], function (err, replies) {
         var i, il, reply, to_buffer, args;
         if (replies) {
             for (i = 1, il = self.queue.length; i < il; i += 1) {
@@ -1076,7 +1075,7 @@ Multi.prototype.exec = function (callback) {
                 }
 
                 // TODO - confusing and error-prone that hgetall is special cased in two places
-                if (reply && args[0].toLowerCase() === "hgetall") {
+                if (reply && args[0] === "hgetall") {
                     replies[i - 1] = reply = reply_to_object(reply);
                 }
 
