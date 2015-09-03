@@ -1,6 +1,10 @@
 Changelog
 =========
 
+## next
+
+* [#814](https://github.com/NodeRedis/node_redis/pull/814) Support new commands and drop support for very old ones (@BridgeAR)
+
 ## v1.0.0 - Aug 30, 2015
 
 * Huge issue and pull-request cleanup. Thanks Blain! (@blainsmith)
