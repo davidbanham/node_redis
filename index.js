@@ -147,13 +147,7 @@ RedisClient.prototype.flush_and_error = function (message) {
     while (this.offline_queue.length > 0) {
         command_obj = this.offline_queue.shift();
         if (typeof command_obj.callback === "function") {
-            try {
-                command_obj.callback(error);
-            } catch (callback_err) {
-                process.nextTick(function () {
-                    throw callback_err;
-                });
-            }
+            command_obj.callback(error);
         }
     }
     this.offline_queue = new Queue();
@@ -161,13 +155,7 @@ RedisClient.prototype.flush_and_error = function (message) {
     while (this.command_queue.length > 0) {
         command_obj = this.command_queue.shift();
         if (typeof command_obj.callback === "function") {
-            try {
-                command_obj.callback(error);
-            } catch (callback_err) {
-                process.nextTick(function () {
-                    throw callback_err;
-                });
-            }
+            command_obj.callback(error);
         }
     }
     this.command_queue = new Queue();
@@ -529,14 +517,7 @@ RedisClient.prototype.return_error = function (err) {
         this.should_buffer = false;
     }
 
-    try {
-        command_obj.callback(err);
-    } catch (callback_err) {
-        // if a callback throws an exception, re-throw it on a new stack so the parser can keep going
-        process.nextTick(function () {
-            throw callback_err;
-        });
-    }
+    command_obj.callback(err);
 };
 
 // hgetall converts its replies to an Object.  If the reply is empty, null is returned.
