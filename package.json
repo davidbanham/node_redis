@@ -14,7 +14,6 @@
     "test": "nyc ./node_modules/.bin/_mocha ./test/*.js ./test/commands/*.js ./test/parser/*.js --timeout=8000"
   },
   "devDependencies": {
-    "async": "^1.3.0",
     "colors": "~0.6.0-1",
     "coveralls": "^2.11.2",
     "hiredis": "^0.4.1",

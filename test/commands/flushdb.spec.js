@@ -1,4 +1,3 @@
-var async = require('async');
 var assert = require('assert');
 var config = require("../lib/config");
 var helper = require('../helper');
@@ -58,26 +57,14 @@ describe("The 'flushdb' method", function () {
                     var oldSize;
 
                     beforeEach(function (done) {
-                        async.parallel([function (next) {
-                            client.mset(key, uuid.v4(), key2, uuid.v4(), function (err, res) {
-                                helper.isNotError()(err, res);
-                                next(err);
-                            });
-                        }, function (next) {
-                            client.dbsize([], function (err, res) {
-                                helper.isType.positiveNumber()(err, res);
-                                oldSize = res;
-                                next(err);
-                            });
-                        }], function (err) {
-                            if (err) {
-                                return done(err);
-                            }
-
-                            client.flushdb(function (err, res) {
-                                helper.isString("OK")(err, res);
-                                done(err);
-                            });
+                        var end = helper.callFuncAfter(function () {
+                            client.flushdb(helper.isString("OK", done));
+                        }, 2);
+                        client.mset(key, uuid.v4(), key2, uuid.v4(), helper.isNotError(end));
+                        client.dbsize([], function (err, res) {
+                            helper.isType.positiveNumber()(err, res);
+                            oldSize = res;
+                            end();
                         });
                     });
 
