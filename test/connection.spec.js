@@ -1,7 +1,8 @@
+'use strict';
+
 var assert = require("assert");
 var config = require("./lib/config");
 var helper = require('./helper');
-var path = require('path');
 var redis = config.redis;
 
 describe("on lost connection", function () {
