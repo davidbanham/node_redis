@@ -224,14 +224,15 @@ describe("The 'multi' method", function () {
                         });
                 });
 
-                it('reports multiple exceptions when they occur', function (done) {
+                it('reports EXECABORT exceptions when they occur (bevor EXEC is running)', function (done) {
                     if (!helper.serverVersionAtLeast(client, [2, 6, 5])) return done();
 
-                    client.multi().set("foo").exec(function (err, reply) {
-                        assert(Array.isArray(err), "err should be an array");
-                        assert.equal(2, err.length, "err should have 2 items");
-                        assert(err[0].message.match(/ERR/), "First error message should contain ERR");
-                        assert(err[1].message.match(/EXECABORT/), "First error message should contain EXECABORT");
+                    client.multi().config("bar").set("foo").exec(function (err, reply) {
+                        assert.equal(err.code, "EXECABORT");
+                        assert.equal(reply, undefined, "The reply should have been discarded");
+                        assert(err.message.match(/^EXECABORT/), "Error message should begin with EXECABORT");
+                        assert.equal(err.errors.length, 1, "err.errors should have 1 items");
+                        assert(/^ERR/.test(err.errors[0].message), "Actuall error message should begin with ERR");
                         return done();
                     });
                 });

@@ -1085,31 +1085,34 @@ Multi.prototype.exec = function (callback) {
                 var cur = self.queue[index];
                 if (typeof cur[cur.length - 1] === "function") {
                     cur[cur.length - 1](err);
-                } else {
-                    errors.push(new Error(err));
                 }
+                err.position = index - 1;
+                errors.push(err);
             }
         });
     }, this);
 
     // TODO - make this callback part of Multi.prototype instead of creating it each time
     return this._client.send_command("EXEC", [], function (err, replies) {
-        if (err) {
-            if (callback) {
-                errors.push(new Error(err));
-                callback(errors);
-                return;
-            } else {
-                throw new Error(err);
-            }
-        }
-
         var i, il, reply, to_buffer, args;
-
         if (replies) {
             for (i = 1, il = self.queue.length; i < il; i += 1) {
                 reply = replies[i - 1];
                 args = self.queue[i];
+                if (reply instanceof Error) {
+                    if (err === null) {
+                        err = new Error('EXEC execution failed');
+                        err.code = 'MULTIERROR';
+                        err.errors = [];
+                    }
+                    replies[i - 1] = undefined;
+                    if (typeof args[args.length - 1] === "function") {
+                        args[args.length - 1](reply, null);
+                    }
+                    reply.position = i - 1;
+                    err.errors.push(reply);
+                    continue;
+                }
                 to_buffer = wants_buffers[i];
 
                 // If we asked for strings, even in detect_buffers mode, then return strings:
@@ -1126,10 +1129,16 @@ Multi.prototype.exec = function (callback) {
                     args[args.length - 1](null, reply);
                 }
             }
+        } else if (err) {
+            err.code = 'EXECABORT';
+            err.errors = errors;
+            if (!callback) {
+                throw err;
+            }
         }
 
         if (callback) {
-            callback(null, replies);
+            callback(err, replies);
         }
     });
 };
