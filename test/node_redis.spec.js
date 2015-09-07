@@ -759,12 +759,16 @@ describe("The node_redis client", function () {
                             max_attempts: 0,
                             enable_offline_queue: false
                         });
+                        var emittedError = false;
 
                         client.on('error', function (err) {
+                            if (/set command not send/.test(err.message)) {
+                                emittedError = true;
+                            }
                             // ignore, b/c expecting a "can't connect" error
                         });
 
-                        assert.throws(function () {
+                        assert.doesNotThrow(function () {
                             client.set('foo', 'bar');
                         });
 
@@ -772,6 +776,7 @@ describe("The node_redis client", function () {
                             client.set('foo', 'bar', function (err) {
                                 // should callback with an error
                                 assert.ok(err);
+                                assert(emittedError);
                                 setTimeout(function () {
                                     return done();
                                 }, 50);

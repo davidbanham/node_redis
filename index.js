@@ -625,10 +625,12 @@ RedisClient.prototype.return_reply = function (reply) {
                 }
                 this.emit(type, reply1String, reply[2]); // channel, count
             } else {
-                throw new Error("subscriptions are active but got unknown reply type " + type);
+                this.emit("error", new Error("subscriptions are active but got unknown reply type " + type));
+                return;
             }
-        } else if (! this.closing) {
-            throw new Error("subscriptions are active but got an invalid reply: " + reply);
+        } else if (!this.closing) {
+            this.emit("error", new Error("subscriptions are active but got an invalid reply: " + reply));
+            return;
         }
     } else if (this.monitoring) {
         len = reply.indexOf(" ");
@@ -639,7 +641,7 @@ RedisClient.prototype.return_reply = function (reply) {
         });
         this.emit("monitor", timestamp, args);
     } else {
-        throw new Error("node_redis command queue state error. If you can reproduce this, please report it.");
+        this.emit("error", new Error("node_redis command queue state error. If you can reproduce this, please report it."));
     }
 };
 
@@ -699,9 +701,14 @@ RedisClient.prototype.send_command = function (command, args, callback) {
 
     // if the value is undefined or null and command is set or setx, need not to send message to redis
     if (command === 'set' || command === 'setex') {
-        if(args[args.length - 1] === undefined || args[args.length - 1] === null) {
+        if (args[args.length - 1] === undefined || args[args.length - 1] === null) {
             var err = new Error('send_command: ' + command + ' value must not be undefined or null');
-            return callback && callback(err);
+            if (callback) {
+                return callback && callback(err);
+            }
+            // TODO: Activate this behavior later
+            // this.emit("error", err);
+            return;
         }
     }
 
@@ -724,15 +731,15 @@ RedisClient.prototype.send_command = function (command, args, callback) {
             this.offline_queue.push(command_obj);
             this.should_buffer = true;
         } else {
-            var not_writeable_error = new Error('send_command: stream not writeable. enable_offline_queue is false');
+            var not_writeable_error = new Error('Stream not writeable and offline queue deactivated. ' + command + ' command not send.');
             if (command_obj.callback) {
                 command_obj.callback(not_writeable_error);
             } else {
-                throw not_writeable_error;
+                this.emit("error", not_writeable_error);
             }
         }
 
-        return false;
+        return;
     }
 
     if (command === "subscribe" || command === "psubscribe" || command === "unsubscribe" || command === "punsubscribe") {
@@ -742,7 +749,8 @@ RedisClient.prototype.send_command = function (command, args, callback) {
     } else if (command === "quit") {
         this.closing = true;
     } else if (this.pub_sub_mode === true) {
-        throw new Error("Connection in subscriber mode, only subscriber commands may be used");
+        this.emit("error", new Error("Connection in subscriber mode, only subscriber commands may be used"));
+        return;
     }
     this.command_queue.push(command_obj);
     this.commands_sent += 1;
