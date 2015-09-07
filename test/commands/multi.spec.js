@@ -237,6 +237,18 @@ describe("The 'multi' method", function () {
                     });
                 });
 
+                it('reports multiple exceptions when they occur (while EXEC is running)', function (done) {
+                    if (!helper.serverVersionAtLeast(client, [2, 6, 5])) return done();
+
+                    client.multi().config("bar").exec(function (err, reply) {
+                        assert.equal(err.code, "MULTIERROR");
+                        assert(err.message.match(/^EXEC/), "Error message should begin with EXEC");
+                        assert.equal(err.errors.length, 1, "err.errors should have 1 items");
+                        assert(/^ERR/.test(err.errors[0].message), "Actuall error message should begin with ERR");
+                        return done();
+                    });
+                });
+
             });
         });
     });
