@@ -125,8 +125,8 @@ RedisClient.prototype.install_stream_listeners = function() {
 RedisClient.prototype.initialize_retry_vars = function () {
     this.retry_timer = null;
     this.retry_totaltime = 0;
-    this.retry_delay = 150;
     this.retry_backoff = 1.7;
+    this.retry_delay = 118; // Math.round(200 / this.retry_backoff) === 118
     this.attempts = 1;
 };
 
