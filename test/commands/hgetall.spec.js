@@ -11,7 +11,6 @@ describe("The 'hgetall' method", function () {
             var client;
 
             describe('regular client', function () {
-                var args = config.configureClient(parser, ip);
 
                 beforeEach(function (done) {
                     client = redis.createClient.apply(redis.createClient, args);

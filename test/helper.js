@@ -91,13 +91,18 @@ module.exports = {
         }
         return true;
     },
-    allTests: function (cb) {
+    allTests: function (options, cb) {
+        if (!cb) {
+            cb = options;
+            options = {};
+        }
         [undefined].forEach(function (options) { // add buffer option at some point
             describe(options && options.return_buffers ? "returning buffers" : "returning strings", function () {
-                ['hiredis', 'javascript'].forEach(function (parser) {
-                    cb(parser, "/tmp/redis.sock", config.configureClient(parser, "/tmp/redis.sock", options));
-                    ['IPv4', 'IPv6'].forEach(function (ip) {
-                        cb(parser, ip, config.configureClient(parser, ip, options));
+                ['javascript', 'hiredis'].forEach(function (parser) {
+                    ['IPv4', 'IPv6', '/tmp/redis.sock'].forEach(function (ip, i) {
+                        if (i === 0 || options.allConnections) {
+                            cb(parser, ip, config.configureClient(parser, ip));
+                        }
                     });
                 });
             });
