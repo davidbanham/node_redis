@@ -440,6 +440,16 @@ RedisClient.prototype.connection_gone = function (why) {
         return;
     }
 
+    if (this.max_attempts !== null && this.attempts > this.max_attempts) {
+        this.emit('error', new Error("Redis connection in broken state: maximum connection attempts exceeded."));
+        return;
+    }
+
+    if (this.retry_totaltime > this.connect_timeout) {
+        this.emit('error', new Error("Redis connection in broken state: connection timeout exceeded."));
+        return;
+    }
+
     debug("Redis connection is gone from " + why + " event.");
     this.connected = false;
     this.ready = false;
@@ -457,7 +467,7 @@ RedisClient.prototype.connection_gone = function (why) {
     }
 
     // since we are collapsing end and close, users don't expect to be called twice
-    if (! this.emitted_end) {
+    if (!this.emitted_end) {
         this.emit("end");
         this.emitted_end = true;
     }
@@ -480,30 +490,20 @@ RedisClient.prototype.connection_gone = function (why) {
 
     debug("Retry connection in " + this.retry_delay + " ms");
 
-    if (this.max_attempts && this.attempts >= this.max_attempts) {
-        this.retry_timer = null;
-        this.emit('error', new Error("Redis connection in broken state: maximum connection attempts exceeded."));
-        return;
-    }
-
-    this.attempts += 1;
-    this.emit("reconnecting", {
-        delay: self.retry_delay,
-        attempt: self.attempts
-    });
     this.retry_timer = setTimeout(function () {
         debug("Retrying connection...");
 
-        self.retry_totaltime += self.retry_delay;
+        self.emit("reconnecting", {
+            delay: self.retry_delay,
+            attempt: self.attempts
+        });
 
-        if (self.connect_timeout && self.retry_totaltime >= self.connect_timeout) {
-            self.retry_timer = null;
-            this.emit('error', new Error("Redis connection in broken state: connection timeout exceeded."));
-            return;
-        }
+        self.retry_totaltime += self.retry_delay;
+        self.attempts += 1;
 
         self.stream = net.createConnection(self.connectionOption);
         self.install_stream_listeners();
+
         self.retry_timer = null;
     }, this.retry_delay);
 };
