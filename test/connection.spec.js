@@ -9,9 +9,15 @@ describe("on lost connection", function () {
 
         describe("using " + parser + " and " + ip, function () {
 
+            var client;
+
+            afterEach(function () {
+                client.end();
+            });
+
             it("emit an error after max retry attempts and do not try to reconnect afterwards", function (done) {
-                var max_attempts = 3;
-                var client = redis.createClient({
+                var max_attempts = 4;
+                client = redis.createClient({
                     parser: parser,
                     max_attempts: max_attempts
                 });
@@ -30,7 +36,7 @@ describe("on lost connection", function () {
                 client.on('error', function(err) {
                     if (/Redis connection in broken state: maximum connection attempts.*?exceeded./.test(err.message)) {
                         setTimeout(function () {
-                            assert.strictEqual(calls, max_attempts);
+                            assert.strictEqual(calls, max_attempts - 1);
                             done();
                         }, 1500);
                     }
@@ -39,7 +45,7 @@ describe("on lost connection", function () {
 
             it("emit an error after max retry timeout and do not try to reconnect afterwards", function (done) {
                 var connect_timeout = 1000; // in ms
-                var client = redis.createClient({
+                client = redis.createClient({
                     parser: parser,
                     connect_timeout: connect_timeout
                 });
