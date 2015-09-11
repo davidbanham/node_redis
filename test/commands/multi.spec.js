@@ -241,12 +241,39 @@ describe("The 'multi' method", function () {
                 it('reports multiple exceptions when they occur (while EXEC is running)', function (done) {
                     if (!helper.serverVersionAtLeast(client, [2, 6, 5])) return done();
 
-                    client.multi().config("bar").exec(function (err, reply) {
+                    client.multi().config("bar").debug("foo").exec(function (err, reply) {
                         assert.equal(err.code, "MULTIERROR");
                         assert(err.message.match(/^EXEC/), "Error message should begin with EXEC");
-                        assert.equal(err.errors.length, 1, "err.errors should have 1 items");
+                        assert.equal(err.errors.length, 2, "err.errors should have 2 items");
                         assert(/^ERR/.test(err.errors[0].message), "Actuall error message should begin with ERR");
                         return done();
+                    });
+                });
+
+                it('reports multiple exceptions when they occur (while EXEC is running) and calls cb', function (done) {
+                    if (!helper.serverVersionAtLeast(client, [2, 6, 5])) return done();
+
+                    var multi = client.multi();
+                    multi.config("bar", helper.isError());
+                    multi.debug("foo").exec(function (err, reply) {
+                        assert.equal(err.code, "MULTIERROR");
+                        assert(err.message.match(/^EXEC/), "Error message should begin with EXEC");
+                        assert.equal(err.errors.length, 2, "err.errors should have 2 items");
+                        assert(/^ERR/.test(err.errors[0].message), "Actuall error message should begin with ERR");
+                        return done();
+                    });
+                });
+
+                it("emits an error instead of throwing it if no callback is provided in exec", function (done) {
+                    var multi = client.multi();
+                    multi.config("bar");
+                    multi.set("foo", "bar");
+                    multi.exec();
+
+                    client.on('error', function(err) {
+                        assert.equal(err.code, 'MULTIERROR');
+                        assert.equal(err.errors.length, 1);
+                        done();
                     });
                 });
 

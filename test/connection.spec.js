@@ -10,24 +10,16 @@ describe("on lost connection", function () {
 
         describe("using " + parser + " and " + ip, function () {
 
-            var client;
-
-            afterEach(function () {
-                client.end();
-            });
-
             it("emit an error after max retry attempts and do not try to reconnect afterwards", function (done) {
                 var max_attempts = 4;
-                client = redis.createClient({
+                var client = redis.createClient({
                     parser: parser,
                     max_attempts: max_attempts
                 });
                 var calls = 0;
 
                 client.once('ready', function() {
-                    // Pretend that redis can't reconnect
-                    client.on_connect = client.on_error;
-                    client.stream.destroy();
+                    helper.killConnection(client);
                 });
 
                 client.on("reconnecting", function (params) {
@@ -46,16 +38,14 @@ describe("on lost connection", function () {
 
             it("emit an error after max retry timeout and do not try to reconnect afterwards", function (done) {
                 var connect_timeout = 1000; // in ms
-                client = redis.createClient({
+                var client = redis.createClient({
                     parser: parser,
                     connect_timeout: connect_timeout
                 });
                 var time = 0;
 
                 client.once('ready', function() {
-                    // Pretend that redis can't reconnect
-                    client.on_connect = client.on_error;
-                    client.stream.destroy();
+                    helper.killConnection(client);
                 });
 
                 client.on("reconnecting", function (params) {
@@ -69,6 +59,23 @@ describe("on lost connection", function () {
                             done();
                         }, 1500);
                     }
+                });
+            });
+
+            it("end connection while retry is still ongoing", function (done) {
+                var connect_timeout = 1000; // in ms
+                var client = redis.createClient({
+                    parser: parser,
+                    connect_timeout: connect_timeout
+                });
+
+                client.once('ready', function() {
+                    helper.killConnection(client);
+                });
+
+                client.on("reconnecting", function (params) {
+                    client.end();
+                    setTimeout(done, 100);
                 });
             });
 

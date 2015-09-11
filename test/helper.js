@@ -105,15 +105,11 @@ module.exports = {
             cb = options;
             options = {};
         }
-        [undefined].forEach(function (options) { // add buffer option at some point
-            describe(options && options.return_buffers ? "returning buffers" : "returning strings", function () {
-                ['javascript', 'hiredis'].forEach(function (parser) {
-                    ['IPv4', 'IPv6', '/tmp/redis.sock'].forEach(function (ip, i) {
-                        if (i === 0 || options.allConnections) {
-                            cb(parser, ip, config.configureClient(parser, ip));
-                        }
-                    });
-                });
+        ['javascript', 'hiredis'].forEach(function (parser) {
+            ['IPv4', 'IPv6', '/tmp/redis.sock'].forEach(function (ip, i) {
+                if (i === 0 || options.allConnections) {
+                    cb(parser, ip, config.configureClient(parser, ip));
+                }
             });
         });
     },
@@ -130,5 +126,15 @@ module.exports = {
                 func();
             }
         };
+    },
+    killConnection: function (client) {
+        // Change the connection option to a non existing one and destroy the stream
+        client.connectionOption = {
+            port: 6370,
+            host: '127.0.0.2',
+            family: 4
+        };
+        client.address = '127.0.0.2:6370';
+        client.stream.destroy();
     }
 };

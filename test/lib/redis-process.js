@@ -40,9 +40,9 @@ module.exports = {
                 console.error('failed to starting redis with exit code "' + code + '" ' +
                   'stop any other redis processes currently running (' +
                   'hint: lsof -i :6379)');
-                process.exit(code)
+                process.exit(code);
             }
-        })
+        });
 
         // wait for redis to become available, by
         // checking the port we bind on.
