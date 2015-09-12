@@ -19,6 +19,9 @@ if (!process.env.REDIS_TESTS_STARTED) {
 }
 
 module.exports = {
+    redisProcess: function () {
+        return rp;
+    },
     stopRedis: function (done) {
         rp.stop(done);
     },
